@@ -95,6 +95,26 @@ impl Cpu {
         }
     }
 
+    // Skips the boot ROM by starting with the post-boot DMG register state.
+    pub fn new_dmg(memory: Box<dyn MemoryBus>) -> Self {
+        Self {
+            memory,
+            pc: 0x0100,
+            sp: 0xFFFE,
+            a: 0x01,
+            f: 0xB0,
+            b: 0x00,
+            c: 0x13,
+            d: 0x00,
+            e: 0xD8,
+            h: 0x01,
+            l: 0x4D,
+            ime: false,
+            halted: false,
+            pending_ime: false,
+        }
+    }
+
     pub fn step(&mut self) -> Result<(), CpuStepError> {
         if self.pending_ime {
             self.ime = true;
@@ -153,5 +173,58 @@ impl Cpu {
 
     pub fn halted(&self) -> bool {
         self.halted
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::memory::FlatMemory;
+
+    fn dmg_cpu() -> Cpu {
+        Cpu::new_dmg(Box::new(FlatMemory::new()))
+    }
+
+    #[test]
+    fn new_dmg_pc() {
+        assert_eq!(dmg_cpu().pc, 0x0100);
+    }
+
+    #[test]
+    fn new_dmg_sp() {
+        assert_eq!(dmg_cpu().sp, 0xFFFE);
+    }
+
+    #[test]
+    fn new_dmg_af() {
+        let cpu = dmg_cpu();
+        assert_eq!(cpu.a, 0x01);
+        assert_eq!(cpu.f, 0xB0);
+    }
+
+    #[test]
+    fn new_dmg_bc() {
+        let cpu = dmg_cpu();
+        assert_eq!(cpu.b, 0x00);
+        assert_eq!(cpu.c, 0x13);
+    }
+
+    #[test]
+    fn new_dmg_de() {
+        let cpu = dmg_cpu();
+        assert_eq!(cpu.d, 0x00);
+        assert_eq!(cpu.e, 0xD8);
+    }
+
+    #[test]
+    fn new_dmg_hl() {
+        let cpu = dmg_cpu();
+        assert_eq!(cpu.h, 0x01);
+        assert_eq!(cpu.l, 0x4D);
+    }
+
+    #[test]
+    fn new_dmg_ime_is_false() {
+        assert!(!dmg_cpu().ime);
     }
 }

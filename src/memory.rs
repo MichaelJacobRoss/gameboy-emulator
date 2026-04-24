@@ -3,5 +3,7 @@ pub trait MemoryBus {
     fn write(&mut self, addr: u16, value: u8);
 }
 
+pub mod bus;
 pub mod flat_memory;
+pub use bus::Bus;
 pub use flat_memory::FlatMemory;

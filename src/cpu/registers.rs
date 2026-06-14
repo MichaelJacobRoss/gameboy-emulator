@@ -24,6 +24,26 @@ pub enum Register16 {
     PC,
 }
 
+impl Register8 {
+    /// Decodes the 3-bit register field used throughout the LR35902 opcode
+    /// encoding (`0b_ddd` / `0b_sss`).
+    ///
+    /// Index `6` denotes the `(HL)` memory operand, which has no `Register8`
+    /// representation, so it returns `None` and is handled by the caller.
+    pub fn from_bits(bits: u8) -> Option<Register8> {
+        match bits & 0b111 {
+            0 => Some(Register8::B),
+            1 => Some(Register8::C),
+            2 => Some(Register8::D),
+            3 => Some(Register8::E),
+            4 => Some(Register8::H),
+            5 => Some(Register8::L),
+            7 => Some(Register8::A),
+            _ => None, // 6 => (HL)
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! reg {
     (A) => {

@@ -6,6 +6,9 @@ edition = "2024"
 [dependencies]
 thiserror = "2.0.12"
 
+[dev-dependencies]
+comfy-table = "7"
+
 [features]
 default = []
 opcode-coverage = []

@@ -1,0 +1,2 @@
+[alias]
+coverage = "test --features opcode-coverage opcode_coverage -- --nocapture"

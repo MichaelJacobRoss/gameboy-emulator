@@ -1,15 +1,7 @@
-// Temporary for early development
-#![allow(dead_code)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-#![allow(unreachable_patterns)]
-
-mod cpu;
-mod instruction;
-mod memory;
-mod util;
-
 use std::{env, fs, process};
+
+use gameboy_emulator::cpu::Cpu;
+use gameboy_emulator::memory::Bus;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,8 +15,8 @@ fn main() {
         process::exit(1);
     });
 
-    let bus = memory::Bus::new(rom);
-    let mut cpu = cpu::Cpu::new_dmg(Box::new(bus));
+    let bus = Bus::new(rom);
+    let mut cpu = Cpu::new_dmg(Box::new(bus));
 
     loop {
         if let Err(e) = cpu.step() {

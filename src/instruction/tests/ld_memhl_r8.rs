@@ -1,8 +1,5 @@
 use crate::{
-    cpu::{
-        Cpu,
-        registers::{Register8, Register16},
-    },
+    cpu::{Cpu, registers::Register8},
     reg,
 };
 

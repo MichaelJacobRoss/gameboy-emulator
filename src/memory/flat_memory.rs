@@ -10,6 +10,12 @@ impl FlatMemory {
     }
 }
 
+impl Default for FlatMemory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryBus for FlatMemory {
     fn read(&self, addr: u16) -> u8 {
         self.data[addr as usize]

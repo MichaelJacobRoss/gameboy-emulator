@@ -13,9 +13,12 @@ use crate::{
     instruction::{
         Instruction, InstructionDecodeError, InstructionExecuteError, Opcode, OpcodeDecodeError,
     },
-    memory::{FlatMemory, MemoryBus},
+    memory::MemoryBus,
     util,
 };
+
+#[cfg(test)]
+use crate::memory::FlatMemory;
 
 pub struct Cpu {
     pc: u16,

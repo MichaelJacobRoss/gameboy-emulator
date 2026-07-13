@@ -1,7 +1,4 @@
-use super::{
-    Instruction,
-    flag_adjustment::{self, FlagAdjustment},
-};
+use super::{Instruction, flag_adjustment::FlagAdjustment};
 use crate::{
     cpu::{
         Cpu,

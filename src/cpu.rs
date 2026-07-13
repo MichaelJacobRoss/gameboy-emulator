@@ -2,6 +2,7 @@
 pub mod registers;
 
 pub mod flags;
+pub mod state;
 
 #[cfg(test)]
 pub mod snapshot;

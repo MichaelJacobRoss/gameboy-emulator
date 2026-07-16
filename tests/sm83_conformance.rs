@@ -75,6 +75,36 @@ fn test_dir() -> PathBuf {
     }
 }
 
+/// 244 valid base opcodes (256 minus the CB prefix and 11 illegal bytes)
+/// plus the 256 CB-prefixed ones, which count as unimplemented until the
+/// decoder grows a CB probe.
+const TOTAL_OPCODES: usize = 244 + 256;
+
+const BAR_WIDTH: usize = 50;
+
+fn segment(count: usize) -> usize {
+    let width = count * BAR_WIDTH / TOTAL_OPCODES;
+    if count > 0 { width.max(1) } else { 0 }
+}
+
+fn progress_line(passing: usize, failing: usize, stream: Stream) -> String {
+    let unimplemented = TOTAL_OPCODES - passing - failing;
+    let (green, red) = (segment(passing), segment(failing));
+    let grey = BAR_WIDTH.saturating_sub(green + red);
+    let percent = passing as f64 * 100.0 / TOTAL_OPCODES as f64;
+    format!(
+        "{}{}{}  {} · {} · {} of {TOTAL_OPCODES} ({percent:.1}% verified)",
+        "█".repeat(green).if_supports_color(stream, |t| t.green()),
+        "█".repeat(red).if_supports_color(stream, |t| t.red()),
+        "█"
+            .repeat(grey)
+            .if_supports_color(stream, |t| t.bright_black()),
+        format!("{passing} passing").if_supports_color(stream, |t| t.green()),
+        format!("{failing} failing").if_supports_color(stream, |t| t.red()),
+        format!("{unimplemented} unimplemented").if_supports_color(stream, |t| t.bright_black()),
+    )
+}
+
 fn diff(name: &str, want: String, got: String) -> String {
     format!(
         "{name} want {} got {}",
@@ -191,6 +221,7 @@ fn sm83_conformance() {
             "{}",
             message.if_supports_color(Stream::Stdout, |t| t.green())
         );
+        println!("{}", progress_line(opcodes, 0, Stream::Stdout));
         return;
     }
 
@@ -203,6 +234,10 @@ fn sm83_conformance() {
     eprintln!(
         "{}",
         summary.if_supports_color(Stream::Stderr, |t| t.bold())
+    );
+    eprintln!(
+        "{}",
+        progress_line(opcodes - failing.len(), failing.len(), Stream::Stderr)
     );
     eprintln!();
     for (byte, failed, total, example) in &failing {

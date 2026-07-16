@@ -121,20 +121,20 @@ impl Cpu {
     pub fn get_register16(&self, reg: Register16) -> u16 {
         match reg {
             Register16::AF => util::u16_from_little_endian(
-                self.get_register8(reg!(A)),
                 self.get_register8(reg!(F)),
+                self.get_register8(reg!(A)),
             ),
             Register16::BC => util::u16_from_little_endian(
-                self.get_register8(reg!(B)),
                 self.get_register8(reg!(C)),
+                self.get_register8(reg!(B)),
             ),
             Register16::DE => util::u16_from_little_endian(
-                self.get_register8(reg!(D)),
                 self.get_register8(reg!(E)),
+                self.get_register8(reg!(D)),
             ),
             Register16::HL => util::u16_from_little_endian(
-                self.get_register8(reg!(H)),
                 self.get_register8(reg!(L)),
+                self.get_register8(reg!(H)),
             ),
             Register16::SP => self.sp,
             Register16::PC => self.pc,
@@ -146,20 +146,20 @@ impl Cpu {
 
         match reg {
             Register16::AF => {
-                self.set_register8(reg!(A), little_endian.0);
-                self.set_register8(reg!(F), little_endian.1);
+                self.set_register8(reg!(F), little_endian.0);
+                self.set_register8(reg!(A), little_endian.1);
             }
             Register16::BC => {
-                self.set_register8(reg!(B), little_endian.0);
-                self.set_register8(reg!(C), little_endian.1);
+                self.set_register8(reg!(C), little_endian.0);
+                self.set_register8(reg!(B), little_endian.1);
             }
             Register16::DE => {
-                self.set_register8(reg!(D), little_endian.0);
-                self.set_register8(reg!(E), little_endian.1);
+                self.set_register8(reg!(E), little_endian.0);
+                self.set_register8(reg!(D), little_endian.1);
             }
             Register16::HL => {
-                self.set_register8(reg!(H), little_endian.0);
-                self.set_register8(reg!(L), little_endian.1);
+                self.set_register8(reg!(L), little_endian.0);
+                self.set_register8(reg!(H), little_endian.1);
             }
             Register16::SP => self.sp = value,
             Register16::PC => self.pc = value,

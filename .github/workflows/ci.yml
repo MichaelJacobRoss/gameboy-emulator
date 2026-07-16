@@ -40,3 +40,31 @@ jobs:
 
       - name: Test
         run: cargo test
+
+  conformance:
+    name: SingleStepTests/sm83
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cache SingleStepTests corpus
+        id: sm83-cache
+        uses: actions/cache@v4
+        with:
+          path: sm83-data
+          key: sm83-v1
+
+      - name: Download SingleStepTests corpus
+        if: steps.sm83-cache.outputs.cache-hit != 'true'
+        run: git clone --depth 1 https://github.com/SingleStepTests/sm83 sm83-data
+
+      - name: Run conformance suite
+        env:
+          SM83_TEST_DIR: ${{ github.workspace }}/sm83-data/v1
+        run: cargo test --features sm83-conformance --test sm83_conformance -- --nocapture

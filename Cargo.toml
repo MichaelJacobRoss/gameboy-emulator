@@ -5,6 +5,8 @@ edition = "2024"
 
 [dependencies]
 thiserror = "2.0.12"
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }
 
 [dev-dependencies]
 comfy-table = "7"
@@ -12,3 +14,4 @@ comfy-table = "7"
 [features]
 default = []
 opcode-coverage = []
+sm83-conformance = ["dep:serde", "dep:serde_json"]

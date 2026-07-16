@@ -139,6 +139,11 @@ impl Cpu {
             .map_err(|source| CpuStepError::Execute { pc, source })
     }
 
+    /// Reads a byte from the bus, for inspecting RAM after a step.
+    pub fn read_memory(&self, address: u16) -> u8 {
+        self.memory.read(address)
+    }
+
     pub(crate) fn disable_ime(&mut self) {
         self.ime = false
     }

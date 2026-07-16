@@ -67,4 +67,5 @@ jobs:
       - name: Run conformance suite
         env:
           SM83_TEST_DIR: ${{ github.workspace }}/sm83-data/v1
+          CLICOLOR_FORCE: "1"
         run: cargo test --features sm83-conformance --test sm83_conformance -- --nocapture

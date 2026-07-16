@@ -23,6 +23,7 @@ use gameboy_emulator::cpu::Cpu;
 use gameboy_emulator::cpu::state::CpuState;
 use gameboy_emulator::instruction::Opcode;
 use gameboy_emulator::memory::{FlatMemory, MemoryBus};
+use owo_colors::{OwoColorize, Stream};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -74,6 +75,41 @@ fn test_dir() -> PathBuf {
     }
 }
 
+fn diff(name: &str, want: String, got: String) -> String {
+    format!(
+        "{name} want {} got {}",
+        want.if_supports_color(Stream::Stderr, |t| t.green()),
+        got.if_supports_color(Stream::Stderr, |t| t.red())
+    )
+}
+
+fn diff_states(want: &CpuState, got: &CpuState) -> Vec<String> {
+    let mut diffs = Vec::new();
+    for (name, want, got) in [("pc", want.pc, got.pc), ("sp", want.sp, got.sp)] {
+        if want != got {
+            diffs.push(diff(name, format!("{want:#06X}"), format!("{got:#06X}")));
+        }
+    }
+    for (name, want, got) in [
+        ("a", want.a, got.a),
+        ("f", want.f, got.f),
+        ("b", want.b, got.b),
+        ("c", want.c, got.c),
+        ("d", want.d, got.d),
+        ("e", want.e, got.e),
+        ("h", want.h, got.h),
+        ("l", want.l, got.l),
+    ] {
+        if want != got {
+            diffs.push(diff(name, format!("{want:#04X}"), format!("{got:#04X}")));
+        }
+    }
+    if want.ime != got.ime {
+        diffs.push(diff("ime", want.ime.to_string(), got.ime.to_string()));
+    }
+    diffs
+}
+
 fn run_case(case: &Case) -> Result<(), String> {
     let mut memory = FlatMemory::new();
     for &(addr, value) in &case.initial.ram {
@@ -81,27 +117,25 @@ fn run_case(case: &Case) -> Result<(), String> {
     }
 
     let mut cpu = Cpu::with_state(case.initial.cpu_state(), Box::new(memory));
-    cpu.step().map_err(|e| format!("{}: {e}", case.name))?;
+    cpu.step().map_err(|e| e.to_string())?;
 
-    let (expected, actual) = (case.end.cpu_state(), cpu.state());
-    if actual != expected {
-        return Err(format!(
-            "{}: state mismatch\n     expected {expected:?}\n     actual   {actual:?}",
-            case.name
-        ));
-    }
-
+    let mut diffs = diff_states(&case.end.cpu_state(), &cpu.state());
     for &(addr, value) in &case.end.ram {
         let got = cpu.read_memory(addr);
         if got != value {
-            return Err(format!(
-                "{}: ram[{addr:#06X}] expected {value:#04X}, got {got:#04X}",
-                case.name
+            diffs.push(diff(
+                &format!("ram[{addr:#06X}]"),
+                format!("{value:#04X}"),
+                format!("{got:#04X}"),
             ));
         }
     }
 
-    Ok(())
+    if diffs.is_empty() {
+        Ok(())
+    } else {
+        Err(diffs.join(" · "))
+    }
 }
 
 #[test]
@@ -118,8 +152,7 @@ fn sm83_conformance() {
 
     let mut opcodes = 0;
     let mut cases = 0;
-    let mut failures = Vec::new();
-    let mut failing_opcodes = Vec::new();
+    let mut failing = Vec::new();
 
     for byte in 0u8..=0xFF {
         if Opcode::try_from(byte).is_err() {
@@ -133,35 +166,55 @@ fn sm83_conformance() {
             serde_json::from_str(&json).unwrap_or_else(|e| panic!("parsing {path:?}: {e}"));
 
         opcodes += 1;
-        let mut opcode_failures = 0;
+        cases += opcode_cases.len();
+
+        let mut failed = 0;
+        let mut example = String::new();
         for case in &opcode_cases {
-            cases += 1;
-            if let Err(message) = run_case(case) {
-                if failures.len() < 20 {
-                    failures.push(message);
+            if let Err(diff) = run_case(case) {
+                if failed == 0 {
+                    example = format!("e.g. {}: {diff}", case.name);
                 }
-                opcode_failures += 1;
+                failed += 1;
             }
         }
-        if opcode_failures > 0 {
-            failing_opcodes.push((byte, opcode_failures, opcode_cases.len()));
+        if failed > 0 {
+            failing.push((byte, failed, opcode_cases.len(), example));
         }
     }
 
-    println!("ran {cases} cases across {opcodes} implemented opcodes");
+    if failing.is_empty() {
+        let message = format!(
+            "✅ sm83 conformance: all {cases} cases across {opcodes} implemented opcodes passed"
+        );
+        println!(
+            "{}",
+            message.if_supports_color(Stream::Stdout, |t| t.green())
+        );
+        return;
+    }
 
-    if !failing_opcodes.is_empty() {
-        let total: usize = failing_opcodes.iter().map(|&(_, f, _)| f).sum();
-        for message in &failures {
-            eprintln!("{message}");
-        }
-        eprintln!("\nfailing opcodes:");
-        for (byte, failed, total) in &failing_opcodes {
-            eprintln!("  0x{byte:02X}: {failed}/{total}");
-        }
-        panic!(
-            "{total} of {cases} cases failed across {} opcodes",
-            failing_opcodes.len()
+    let failed_cases: usize = failing.iter().map(|&(_, failed, _, _)| failed).sum();
+    let summary = format!(
+        "sm83 conformance: {} of {opcodes} implemented opcodes failing ({failed_cases} of {cases} cases)",
+        failing.len()
+    );
+    eprintln!();
+    eprintln!(
+        "{}",
+        summary.if_supports_color(Stream::Stderr, |t| t.bold())
+    );
+    eprintln!();
+    for (byte, failed, total, example) in &failing {
+        let opcode = format!("0x{byte:02X}");
+        eprintln!(
+            "  ❌ {}  {failed:>4}/{total}  {example}",
+            opcode.if_supports_color(Stream::Stderr, |t| t.bold())
         );
     }
+    eprintln!();
+    panic!(
+        "{failed_cases} of {cases} cases failed across {} opcodes",
+        failing.len()
+    );
 }

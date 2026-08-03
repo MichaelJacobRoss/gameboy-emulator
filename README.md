@@ -1,6 +1,6 @@
 # Game Boy Emulator
 
-[![CI](https://github.com/TrustworthyAdult/gameboy-emulator/actions/workflows/ci.yml/badge.svg)](https://github.com/TrustworthyAdult/gameboy-emulator/actions/workflows/ci.yml)
+[![CI](https://github.com/MichaelJacobRoss/gameboy-emulator/actions/workflows/ci.yml/badge.svg)](https://github.com/MichaelJacobRoss/gameboy-emulator/actions/workflows/ci.yml)
 [![Rust](https://img.shields.io/badge/rust-1.95.0-orange.svg)](rust-toolchain.toml)
 
 A pure-Rust emulator for the original Game Boy (DMG), built correctness-first: every implemented instruction is validated against third-party conformance suites in CI, not just spot-checked by hand.
